@@ -14,7 +14,6 @@ const connection = mysql.createConnection({
 
 connection.connect((err) => {
   if (err) throw err;
-  console.log(`Welcome to the Employee Tracker CMS...`);
   run();
 });
 
@@ -24,9 +23,9 @@ const run = () => {
       name: "action",
       type: "list",
       message: "What would you like to do?",
-      choices: ["Add a new record", "View records", "Update a record", "exit"],
+      choices: ["View all employees", "View all employees by department", "View all employees by manager", "Add employee", "Remove employee", "Update employee", "Update employee role", "Update employee manager", "View all roles", "Add a role", "Remove a role", "exit"],
     })
-    .then((anser) => {
+    .then((answer) => {
       switch (answer.action) {
         case "View all employees":
           break;
@@ -50,6 +49,15 @@ const run = () => {
           break;
 
         case "Update employee manager":
+          break;
+
+        case "View all roles":
+          break;
+
+        case "Add a role":
+          break;
+
+        case "Remove a role":
           break;
 
         case "exit":
