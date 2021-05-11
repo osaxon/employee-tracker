@@ -23,11 +23,25 @@ const run = () => {
       name: "action",
       type: "list",
       message: "What would you like to do?",
-      choices: ["View all employees", "View all employees by department", "View all employees by manager", "Add employee", "Remove employee", "Update employee", "Update employee role", "Update employee manager", "View all roles", "Add a role", "Remove a role", "exit"],
+      choices: [
+        "View all employees",
+        "View all employees by department",
+        "View all employees by manager",
+        "Add employee",
+        "Remove employee",
+        "Update employee",
+        "Update employee role",
+        "Update employee manager",
+        "View all roles",
+        "Add a role",
+        "Remove a role",
+        "exit",
+      ],
     })
     .then((answer) => {
       switch (answer.action) {
         case "View all employees":
+          viewAllEmployees();
           break;
 
         case "View all employees by department":
@@ -66,3 +80,32 @@ const run = () => {
       }
     });
 };
+
+const viewAllEmployees = () => {
+  console.log("All employees:\n");
+  connection.query("SELECT * FROM employee", (err, res) => {
+    if (err) throw err;
+    console.table(res)
+  })
+};
+
+const viewEmployeesByDept = () => {
+    console.log("Employees by department:\n");
+    inquirer.prompt({
+        name: 'department',
+        message: 'By which department do you want to search?',
+
+    })
+    connection.query("SELECT * FROM employee WHERE ", (err, res, rows) => {
+      if (err) throw err;
+      res.forEach(({id, title, salary, department_id}) => {
+          console.table(rows);
+      })
+    });
+};
+
+
+/*
+Need inquirer to build up query string to be passed to mysql db
+When searching by department or role, the names should form the choices in inquirer
+*/
