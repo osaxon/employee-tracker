@@ -85,7 +85,7 @@ const run = () => {
 
 const viewAllEmployees = () => {
   console.log("All employees:\n");
-  connection.query("SELECT * FROM employee", (err, res) => {
+  connection.query("SELECT employee.id, employee.first_name, employee.last_name, roles.title, departments.name FROM employee LEFT JOIN roles ON employee.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id LEFT JOIN employee manager ON employee.manager_id = manager.id", (err, res) => {
     if (err) throw err;
     console.table(res)
   })
