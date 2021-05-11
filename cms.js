@@ -28,27 +28,33 @@ const run = () => {
     })
     .then((anser) => {
       switch (answer.action) {
-        case "Add a new record":
-          addNewRecord();
+        case "View all employees":
           break;
 
-        case "Update a record":
-          updateRecord();
+        case "View all employees by department":
           break;
 
-        case "View records":
-            viewRecord();
-            break;
-        
+        case "View all employees by manager":
+          break;
+
+        case "Add employee":
+          break;
+
+        case "Remove employee":
+          break;
+
+        case "Update employee":
+          break;
+
+        case "Update employee role":
+          break;
+
+        case "Update employee manager":
+          break;
+
         case "exit":
-            connection.end();
-            break;    
+          connection.end();
+          break;
       }
     });
 };
-
-const addNewRecord = () => {};
-
-const updateRecord = () => {};
-
-const viewRecord = () => {};
