@@ -15,6 +15,20 @@ const connection = mysql.createConnection({
 
 connection.connect((err) => {
     if (err) throw err;
-    console.log(`connected as id ${connection.threadId}`);
-    connection.end();
+    console.log(`Welcome to the Employee Tracker CMS...`)
+    run();
   });
+
+const run = () => {
+    inquirer.prompt({
+        name: 'action',
+        type: 'list',
+        message: 'What would you like to do?',
+        choices: [
+            'Add a new record',
+            'View records',
+            'Update an existing record',
+            'exit',
+        ]
+    })
+}
