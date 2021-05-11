@@ -1,7 +1,7 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
 
-require('dotenv').config();
+require("dotenv").config();
 
 const connection = mysql.createConnection({
   host: "localhost",
@@ -53,6 +53,7 @@ const run = () => {
           break;
 
         case "Add employee":
+            addEmployee();
           break;
 
         case "Remove employee":
@@ -85,29 +86,66 @@ const run = () => {
 
 const viewAllEmployees = () => {
   console.log("All employees:\n");
-  connection.query("SELECT employee.id, employee.first_name, employee.last_name, roles.title, departments.name FROM employee LEFT JOIN roles ON employee.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id LEFT JOIN employee manager ON employee.manager_id = manager.id", (err, res) => {
+
+  const query = `SELECT employee.id, employee.first_name, employee.last_name, roles.title, departments.name AS department 
+  FROM employee 
+  LEFT JOIN roles ON employee.role_id = roles.id 
+  LEFT JOIN departments ON roles.department_id = departments.id 
+  LEFT JOIN employee manager ON employee.manager_id = manager.id`;
+
+  connection.query(query, (err, res) => {
     if (err) throw err;
-    console.table(res)
-  })
+    console.table(res);
+    run();
+  });
 };
 
 const viewEmployeesByDept = () => {
-    console.log("Employees by department:\n");
-    inquirer.prompt({
-        name: 'department',
-        message: 'By which department do you want to search?',
-
-    })
-    connection.query("SELECT * FROM employee WHERE ", (err, res, rows) => {
-      if (err) throw err;
-      res.forEach(({id, title, salary, department_id}) => {
-          console.table(rows);
-      })
+  console.log("Employees by department:\n");
+  connection.query("SELECT * FROM employee WHERE ", (err, res, rows) => {
+    if (err) throw err;
+    res.forEach(({ id, title, salary, department_id }) => {
+      console.table(rows);
     });
+  });
 };
 
+const addEmployee = () => {
+    let params;
+  let roles;
+  const rolesQuery = "SELECT roles.id, roles.title from roles";
+  connection.query(rolesQuery, (err, res) => {
+    if (err) throw err;
+    roles = res.map((obj) => {
+      let rObj = {};
+      rObj[obj.key] = obj.value;
+      return obj;
+    });
+  });
 
-/*
-Need inquirer to build up query string to be passed to mysql db
-When searching by department or role, the names should form the choices in inquirer
-*/
+  inquirer.prompt([
+    {
+      type: "input",
+      name: "firstName",
+      message: "Enter the employee's first name",
+    },
+
+    {
+      type: "input",
+      name: "lastName",
+      message: "Enter the employee's last name",
+    },
+
+    {
+      type: "input",
+      name: "lastName",
+      message: "Enter the employee's last name",
+    },
+  ])
+  .then((answers) => {
+      console.log(answers, roles)
+      return;
+  })
+
+
+};
