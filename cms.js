@@ -103,21 +103,28 @@ const viewEmployeesByDept = () => {
 };
 
 const addEmployee = () => {
-  let params;
-  // maps roles array to key value object for inquirer
-  let roles = [];
+    var params;
+    var roles = [];
+    var mgrChoice = [];
+
   getRoles((err, res) => {
     if (err) throw err;
     else
       res.forEach((role) => {
-        roles.push({ value: role.id, name: role.title });
+        roles.push({ name: role.title, value: role.id });
       });
   });
-  //const rolesQuery = "SELECT roles.id, roles.title from roles";
-  //connection.query(rolesQuery, (err, res) => {
-  //if (err) throw err;
-  //roles = res.map((obj) => ({ value: obj.id, name: obj.title }));
-  //});
+
+  
+
+  getEmployees((err, res) => {
+    if (err) throw err;
+    else
+        res.forEach((employee) => {
+            //let mgrName = `${employee.first_name} ${employee.last_name}`;
+            mgrChoice.push({ value: employee.id, name: employee.first_name });
+        });
+  });
 
   inquirer
     .prompt([
@@ -140,6 +147,7 @@ const addEmployee = () => {
       },
     ])
     .then((answers) => {
+        console.log(answers)
       let firstName = answers.firstName;
       let lastName = answers.lastName;
       params = [firstName, lastName];
@@ -151,13 +159,16 @@ const addEmployee = () => {
           message: "What role is this new employee?",
           choices: roles,
         },
-      ]);
-    });
+      ])
+      .then((answer) => {
+        console.log(answer)
+      })
+    })
 };
 
 // Returns callback containing all entries from employees table
 const getEmployees = function (cb) {
-  const query = `SELECT employee.id, employee.first_name, employee.last_name, roles.title, departments.name AS department 
+  const query = `SELECT employee.id, employee.first_name, employee.last_name, roles.title, departments.name AS department
     FROM employee 
     LEFT JOIN roles ON employee.role_id = roles.id 
     LEFT JOIN departments ON roles.department_id = departments.id 
@@ -170,7 +181,7 @@ const getEmployees = function (cb) {
 
 // Returns callback containing all entries from roles table
 const getRoles = function (cb) {
-  connection.query("SELECT * from roles", (err, res, fields) => {
+  connection.query("SELECT roles.id, roles.title from roles", (err, res, fields) => {
     if (err) return cb(err);
     cb(null, res);
   });
