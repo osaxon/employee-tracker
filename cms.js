@@ -177,11 +177,20 @@ const addEmployee = () => {
             let managerID = answer.manager;
             params.push(managerID);
 
-            const query = `INSERT INTO employees (first_name, last_name, role_id, )`
-        })
+            const query = `
+            INSERT INTO employee (first_name, last_name, role_id, manager_id) 
+            VALUES (?, ?, ?, ?)`
+
+            connection.query(query, params, (err, res) => {
+                if (err) throw err;
+                viewAllEmployees();
+            })
+        });
 
       })
+
     })
+
 };
 
 
