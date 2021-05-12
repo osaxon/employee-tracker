@@ -16,7 +16,13 @@ const connection = mysql.createConnection({
 
 connection.connect((err) => {
   if (err) throw err;
-  run();
+  //run();
+  getRoles((err, res) => {
+    if (err) throw err;
+    else res.forEach((role) => {
+        console.log({id: role.id, title: role.title})
+    });
+  });
 });
 
 const run = () => {
@@ -110,22 +116,17 @@ const viewEmployeesByDept = () => {
   });
 };
 
-// returns array of roles
-const getRoles = () => {
-  let roles = [];
-  const rolesQuery = "SELECT roles.id, roles.title from roles";
-  connection.query(rolesQuery, (err, res) => {
-    if (err) throw err;
-    roles.push(res);
+const getRoles = function (cb) {
+  connection.query("SELECT * from roles", (err, res, fields) => {
+    if (err) return cb(err);
+    cb(null, res);
   });
-  return roles;
 };
-
 
 const addEmployee = () => {
   let params;
   // maps roles array to key value object for inquirer
-  let roles = getRoles().map((obj) => ({ value: obj.id, name: obj.title }));
+  let roles;
   console.log(roles);
   const rolesQuery = "SELECT roles.id, roles.title from roles";
   connection.query(rolesQuery, (err, res) => {
@@ -154,18 +155,17 @@ const addEmployee = () => {
       },
     ])
     .then((answers) => {
-        let firstName = answers.firstName;
-        let lastName = answers.lastName;
-        params = [firstName, lastName];
+      let firstName = answers.firstName;
+      let lastName = answers.lastName;
+      params = [firstName, lastName];
 
-        inquirer.prompt([
-            {
-                type: "list",
-                name: "role",
-                message: "What role is this new employee?",
-                choices: roles
-            }
-        ])
-
+      inquirer.prompt([
+        {
+          type: "list",
+          name: "role",
+          message: "What role is this new employee?",
+          choices: roles,
+        },
+      ]);
     });
 };
