@@ -16,13 +16,7 @@ const connection = mysql.createConnection({
 
 connection.connect((err) => {
   if (err) throw err;
-  //run();
-  getRoles((err, res) => {
-    if (err) throw err;
-    else res.forEach((role) => {
-        console.log({id: role.id, title: role.title})
-    });
-  });
+  run();
 });
 
 const run = () => {
@@ -116,6 +110,7 @@ const viewEmployeesByDept = () => {
   });
 };
 
+// Returns callback containing all entries from roles table
 const getRoles = function (cb) {
   connection.query("SELECT * from roles", (err, res, fields) => {
     if (err) return cb(err);
@@ -126,13 +121,18 @@ const getRoles = function (cb) {
 const addEmployee = () => {
   let params;
   // maps roles array to key value object for inquirer
-  let roles;
-  console.log(roles);
-  const rolesQuery = "SELECT roles.id, roles.title from roles";
-  connection.query(rolesQuery, (err, res) => {
+  let roles = [];
+  getRoles((err, res) => {
     if (err) throw err;
-    roles = res.map((obj) => ({ value: obj.id, name: obj.title }));
+    else res.forEach((role) => {
+        roles.push({value: role.id, name: role.title})
+    });
   });
+  //const rolesQuery = "SELECT roles.id, roles.title from roles";
+  //connection.query(rolesQuery, (err, res) => {
+    //if (err) throw err;
+    //roles = res.map((obj) => ({ value: obj.id, name: obj.title }));
+  //});
 
   inquirer
     .prompt([
