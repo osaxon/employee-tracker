@@ -11,6 +11,8 @@ const allEmpQuery = `SELECT employee.id, employee.first_name, employee.last_name
 
 const rolesQuery = "SELECT roles.id, roles.title from roles";
 
+const deptQuery = "SELECT departments.id, departments.name FROM departments"
+
 const connection = mysql.createConnection({
   host: "localhost",
 
@@ -71,12 +73,14 @@ const run = () => {
           break;
 
         case "Add a role":
+            addRole();
           break;
 
         case "Remove a role":
           break;
 
         case "View departments":
+            viewRecords(deptQuery);
           break;
 
         case "Add department":
@@ -92,19 +96,19 @@ const run = () => {
 
 
 // Prints employee records to console as a table
-const viewAllEmployees = () => {
-  getEmployees((err, res) => {
-    if (err) throw err;
-    console.table(res);
-  });
-};
+// const viewAllEmployees = () => {
+//   getEmployees((err, res) => {
+//     if (err) throw err;
+//     console.table(res);
+//   });
+// };
 
-const viewAllRoles = () => {
-  getRoles((err, res) => {
-    if (err) throw err;
-    console.table(res);
-  });
-};
+// const viewAllRoles = () => {
+//   getRoles((err, res) => {
+//     if (err) throw err;
+//     console.table(res);
+//   });
+// };
 
 const viewRecords = (query) => {
   getRecords(query, (err, res) => {
@@ -202,18 +206,60 @@ const addEmployee = () => {
     });
 };
 
+const addRole = () => {
+
+    var deptChoices = [];
+
+    getRecords(deptQuery, (err, res) => {
+        if (err) throw err;
+        else
+            res.forEach((dept) => {
+            deptChoices.push({ value: dept.id, name: dept.name})
+        })
+    });
+
+    inquirer.prompt([
+        {
+            type: 'input',
+            name: 'title',
+            message: "Enter the role title",
+        },
+        {
+            type: 'input',
+            name: 'salary',
+            message: "Enter the role salary"
+        },
+        {
+            type: 'list',
+            name: 'dept',
+            message: "Select the department for this role",
+            choices: deptChoices
+        }
+    ])
+    .then((answers) => {
+        const params = [answers.title, answers.salary, answers.dept];
+        connection.query(
+            `INSERT INTO roles (title, salary, department_id)
+            VALUES (?, ?, ?)`, params, (err, res) => {
+                if (err) throw err;
+                viewRecords(rolesQuery);
+            }
+        )
+    })
+}
+
 // Returns callback containing all entries from employees table
-const getEmployees = function (cb) {
-  const query = `SELECT employee.id, employee.first_name, employee.last_name, roles.title, departments.name AS department
-    FROM employee 
-    LEFT JOIN roles ON employee.role_id = roles.id 
-    LEFT JOIN departments ON roles.department_id = departments.id 
-    LEFT JOIN employee manager ON employee.manager_id = manager.id`;
-  connection.query(query, (err, res, fields) => {
-    if (err) return cb(err);
-    cb(null, res);
-  });
-};
+// const getEmployees = function (cb) {
+//   const query = `SELECT employee.id, employee.first_name, employee.last_name, roles.title, departments.name AS department
+//     FROM employee 
+//     LEFT JOIN roles ON employee.role_id = roles.id 
+//     LEFT JOIN departments ON roles.department_id = departments.id 
+//     LEFT JOIN employee manager ON employee.manager_id = manager.id`;
+//   connection.query(query, (err, res, fields) => {
+//     if (err) return cb(err);
+//     cb(null, res);
+//   });
+// };
 
 const getRecords = function (query, cb) {
   connection.query(query, (err, res) => {
@@ -232,3 +278,5 @@ const getRoles = function (cb) {
     }
   );
 };
+
+
