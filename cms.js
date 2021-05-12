@@ -53,7 +53,7 @@ const run = () => {
           break;
 
         case "Add employee":
-            addEmployee();
+          addEmployee();
           break;
 
         case "Remove employee":
@@ -110,38 +110,62 @@ const viewEmployeesByDept = () => {
   });
 };
 
-const addEmployee = () => {
-    let params;
-  let roles;
+// returns array of roles
+const getRoles = () => {
+  let roles = [];
   const rolesQuery = "SELECT roles.id, roles.title from roles";
   connection.query(rolesQuery, (err, res) => {
     if (err) throw err;
-    roles = res.map((obj) => ({value: obj.id, name: obj.title}))
+    roles.push(res);
   });
-  
-  inquirer.prompt([
-    {
-      type: "input",
-      name: "firstName",
-      message: "Enter the employee's first name",
-    },
-
-    {
-      type: "input",
-      name: "lastName",
-      message: "Enter the employee's last name",
-    },
-
-    {
-      type: "input",
-      name: "lastName",
-      message: "Enter the employee's last name",
-    },
-  ])
-  .then((answers) => {
-      console.log(answers, roles)
-      return;
-  })
+  return roles;
+};
 
 
+const addEmployee = () => {
+  let params;
+  // maps roles array to key value object for inquirer
+  let roles = getRoles().map((obj) => ({ value: obj.id, name: obj.title }));
+  console.log(roles);
+  const rolesQuery = "SELECT roles.id, roles.title from roles";
+  connection.query(rolesQuery, (err, res) => {
+    if (err) throw err;
+    roles = res.map((obj) => ({ value: obj.id, name: obj.title }));
+  });
+
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "firstName",
+        message: "Enter the employee's first name",
+      },
+
+      {
+        type: "input",
+        name: "lastName",
+        message: "Enter the employee's last name",
+      },
+
+      {
+        type: "input",
+        name: "lastName",
+        message: "Enter the employee's last name",
+      },
+    ])
+    .then((answers) => {
+        let firstName = answers.firstName;
+        let lastName = answers.lastName;
+        params = [firstName, lastName];
+
+        inquirer.prompt([
+            {
+                type: "list",
+                name: "role",
+                message: "What role is this new employee?",
+                choices: roles
+            }
+        ])
+
+    });
 };
