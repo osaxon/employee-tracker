@@ -31,18 +31,25 @@ const run = () => {
         "Add employee",
         "Remove employee",
         "Update employee",
-        "Update employee role",
-        "Update employee manager",
         "View all roles",
         "Add a role",
         "Remove a role",
+        "View departments",
+        "Add department",
         "exit",
       ],
     })
     .then((answer) => {
       switch (answer.action) {
         case "View all employees":
-          viewAllEmployees();
+          //viewAllEmployees();
+          const query = `
+            SELECT employee.id, employee.first_name, employee.last_name, roles.title, departments.name AS department
+            FROM employee 
+            LEFT JOIN roles ON employee.role_id = roles.id 
+            LEFT JOIN departments ON roles.department_id = departments.id 
+            LEFT JOIN employee manager ON employee.manager_id = manager.id`;
+          viewRecords(query);
           break;
 
         case "View all employees by manager":
@@ -58,20 +65,20 @@ const run = () => {
         case "Update employee":
           break;
 
-        case "Update employee role":
-          break;
-
-        case "Update employee manager":
-          break;
-
         case "View all roles":
-            viewAllRoles();
+          viewAllRoles();
           break;
 
         case "Add a role":
           break;
 
         case "Remove a role":
+          break;
+
+        case "View departments":
+          break;
+
+        case "Add department":
           break;
 
         case "exit":
@@ -90,16 +97,23 @@ const viewAllEmployees = () => {
 };
 
 const viewAllRoles = () => {
-    getRoles((err, res) => {
-        if (err) throw err;
-        console.table(res)
-    })
-}
+  getRoles((err, res) => {
+    if (err) throw err;
+    console.table(res);
+  });
+};
+
+const viewRecords = (query) => {
+  getRecords(query, (err, res) => {
+    if (err) throw err;
+    console.table(res);
+  });
+};
 
 const addEmployee = () => {
-    var params;
-    var roles = [];
-    var mgrChoice = [];
+  var params;
+  var roles = [];
+  var mgrChoice = [];
 
   getRoles((err, res) => {
     if (err) throw err;
@@ -112,14 +126,13 @@ const addEmployee = () => {
   getEmployees((err, res) => {
     if (err) throw err;
     else
-        res.forEach((employee) => {
-            let mgrName = `${employee.first_name} ${employee.last_name}`;
-            mgrChoice.push({ value: employee.id, name: mgrName });
-            
-        });
-        // add a null value choice option if employee has no manager
-        mgrChoice.push({ value: null, name: 'none' })
-    });
+      res.forEach((employee) => {
+        let mgrName = `${employee.first_name} ${employee.last_name}`;
+        mgrChoice.push({ value: employee.id, name: mgrName });
+      });
+    // add a null value choice option if employee has no manager
+    mgrChoice.push({ value: null, name: "none" });
+  });
 
   inquirer
     .prompt([
@@ -142,51 +155,49 @@ const addEmployee = () => {
       },
     ])
     .then((answers) => {
-        console.log(answers)
+      console.log(answers);
       let firstName = answers.firstName;
       let lastName = answers.lastName;
       params = [firstName, lastName];
 
-      inquirer.prompt([
-        {
-          type: "list",
-          name: "role",
-          message: "What role is this new employee?",
-          choices: roles,
-        },
-      ])
-      .then((answer) => {
-        let roleID = answer.role;
-        params.push(roleID);
+      inquirer
+        .prompt([
+          {
+            type: "list",
+            name: "role",
+            message: "What role is this new employee?",
+            choices: roles,
+          },
+        ])
+        .then((answer) => {
+          let roleID = answer.role;
+          params.push(roleID);
 
-        inquirer.prompt([
-            {
+          inquirer
+            .prompt([
+              {
                 type: "list",
                 name: "manager",
                 message: "Select the employee's manager (or select none)",
-                choices: mgrChoice
-            }
-        ])
-        .then((answer) => {
-            let managerID = answer.manager;
-            params.push(managerID);
+                choices: mgrChoice,
+              },
+            ])
+            .then((answer) => {
+              let managerID = answer.manager;
+              params.push(managerID);
 
-            const query = `
+              const query = `
             INSERT INTO employee (first_name, last_name, role_id, manager_id) 
-            VALUES (?, ?, ?, ?)`
+            VALUES (?, ?, ?, ?)`;
 
-            connection.query(query, params, (err, res) => {
+              connection.query(query, params, (err, res) => {
                 if (err) throw err;
                 viewAllEmployees();
-            })
+              });
+            });
         });
-
-      })
-
-    })
-
+    });
 };
-
 
 // Returns callback containing all entries from employees table
 const getEmployees = function (cb) {
@@ -201,10 +212,20 @@ const getEmployees = function (cb) {
   });
 };
 
-// Returns callback containing all entries from roles table
-const getRoles = function (cb) {
-  connection.query("SELECT roles.id, roles.title from roles", (err, res, fields) => {
+const getRecords = function (query, cb) {
+  connection.query(query, (err, res, fields) => {
     if (err) return cb(err);
     cb(null, res);
   });
+};
+
+// Returns callback containing all entries from roles table
+const getRoles = function (cb) {
+  connection.query(
+    "SELECT roles.id, roles.title from roles",
+    (err, res, fields) => {
+      if (err) return cb(err);
+      cb(null, res);
+    }
+  );
 };
