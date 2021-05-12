@@ -65,6 +65,7 @@ const run = () => {
           break;
 
         case "View all roles":
+            viewAllRoles();
           break;
 
         case "Add a role":
@@ -87,6 +88,13 @@ const viewAllEmployees = () => {
     console.table(res);
   });
 };
+
+const viewAllRoles = () => {
+    getRoles((err, res) => {
+        if (err) throw err;
+        console.table(res)
+    })
+}
 
 const addEmployee = () => {
     var params;
