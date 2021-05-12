@@ -27,7 +27,6 @@ const run = () => {
       message: "What would you like to do?",
       choices: [
         "View all employees",
-        "View all employees by department",
         "View all employees by manager",
         "Add employee",
         "Remove employee",
@@ -44,9 +43,6 @@ const run = () => {
       switch (answer.action) {
         case "View all employees":
           viewAllEmployees();
-          break;
-
-        case "View all employees by department":
           break;
 
         case "View all employees by manager":
@@ -89,16 +85,6 @@ const viewAllEmployees = () => {
   getEmployees((err, res) => {
     if (err) throw err;
     console.table(res);
-  });
-};
-
-const viewEmployeesByDept = () => {
-  console.log("Employees by department:\n");
-  connection.query("SELECT * FROM employee WHERE ", (err, res, rows) => {
-    if (err) throw err;
-    res.forEach(({ id, title, salary, department_id }) => {
-      console.table(rows);
-    });
   });
 };
 
