@@ -115,16 +115,14 @@ const addEmployee = () => {
       });
   });
 
-  
-
   getEmployees((err, res) => {
     if (err) throw err;
     else
         res.forEach((employee) => {
-            //let mgrName = `${employee.first_name} ${employee.last_name}`;
-            mgrChoice.push({ value: employee.id, name: employee.first_name });
+            let mgrName = `${employee.first_name} ${employee.last_name}`;
+            mgrChoice.push({ value: employee.id, name: mgrName });
         });
-  });
+    });
 
   inquirer
     .prompt([
@@ -161,7 +159,21 @@ const addEmployee = () => {
         },
       ])
       .then((answer) => {
-        console.log(answer)
+        let roleID = answer.role;
+        params.push(roleID);
+
+        inquirer.prompt([
+            {
+                type: "list",
+                name: "manager",
+                message: "Select the employee's manager (or select none)",
+                choices: mgrChoice
+            }
+        ])
+        .then((answer) => {
+            console.log(answer)
+        })
+
       })
     })
 };
