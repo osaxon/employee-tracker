@@ -84,19 +84,11 @@ const run = () => {
     });
 };
 
+// Prints employee records to console as a table
 const viewAllEmployees = () => {
-  console.log("All employees:\n");
-
-  const query = `SELECT employee.id, employee.first_name, employee.last_name, roles.title, departments.name AS department 
-  FROM employee 
-  LEFT JOIN roles ON employee.role_id = roles.id 
-  LEFT JOIN departments ON roles.department_id = departments.id 
-  LEFT JOIN employee manager ON employee.manager_id = manager.id`;
-
-  connection.query(query, (err, res) => {
+  getEmployees((err, res) => {
     if (err) throw err;
     console.table(res);
-    run();
   });
 };
 
@@ -110,28 +102,21 @@ const viewEmployeesByDept = () => {
   });
 };
 
-// Returns callback containing all entries from roles table
-const getRoles = function (cb) {
-  connection.query("SELECT * from roles", (err, res, fields) => {
-    if (err) return cb(err);
-    cb(null, res);
-  });
-};
-
 const addEmployee = () => {
   let params;
   // maps roles array to key value object for inquirer
   let roles = [];
   getRoles((err, res) => {
     if (err) throw err;
-    else res.forEach((role) => {
-        roles.push({value: role.id, name: role.title})
-    });
+    else
+      res.forEach((role) => {
+        roles.push({ value: role.id, name: role.title });
+      });
   });
   //const rolesQuery = "SELECT roles.id, roles.title from roles";
   //connection.query(rolesQuery, (err, res) => {
-    //if (err) throw err;
-    //roles = res.map((obj) => ({ value: obj.id, name: obj.title }));
+  //if (err) throw err;
+  //roles = res.map((obj) => ({ value: obj.id, name: obj.title }));
   //});
 
   inquirer
@@ -168,4 +153,25 @@ const addEmployee = () => {
         },
       ]);
     });
+};
+
+// Returns callback containing all entries from employees table
+const getEmployees = function (cb) {
+  const query = `SELECT employee.id, employee.first_name, employee.last_name, roles.title, departments.name AS department 
+    FROM employee 
+    LEFT JOIN roles ON employee.role_id = roles.id 
+    LEFT JOIN departments ON roles.department_id = departments.id 
+    LEFT JOIN employee manager ON employee.manager_id = manager.id`;
+  connection.query(query, (err, res, fields) => {
+    if (err) return cb(err);
+    cb(null, res);
+  });
+};
+
+// Returns callback containing all entries from roles table
+const getRoles = function (cb) {
+  connection.query("SELECT * from roles", (err, res, fields) => {
+    if (err) return cb(err);
+    cb(null, res);
+  });
 };
