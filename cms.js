@@ -121,7 +121,10 @@ const addEmployee = () => {
         res.forEach((employee) => {
             let mgrName = `${employee.first_name} ${employee.last_name}`;
             mgrChoice.push({ value: employee.id, name: mgrName });
+            
         });
+        // add a null value choice option if employee has no manager
+        mgrChoice.push({ value: null, name: 'none' })
     });
 
   inquirer
@@ -171,12 +174,16 @@ const addEmployee = () => {
             }
         ])
         .then((answer) => {
-            console.log(answer)
+            let managerID = answer.manager;
+            params.push(managerID);
+
+            const query = `INSERT INTO employees (first_name, last_name, role_id, )`
         })
 
       })
     })
 };
+
 
 // Returns callback containing all entries from employees table
 const getEmployees = function (cb) {
