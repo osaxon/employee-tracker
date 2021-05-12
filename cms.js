@@ -3,6 +3,14 @@ const inquirer = require("inquirer");
 
 require("dotenv").config();
 
+const allEmpQuery = `SELECT employee.id, employee.first_name, employee.last_name, roles.title, departments.name AS department
+            FROM employee 
+            LEFT JOIN roles ON employee.role_id = roles.id 
+            LEFT JOIN departments ON roles.department_id = departments.id 
+            LEFT JOIN employee manager ON employee.manager_id = manager.id`;
+
+const rolesQuery = "SELECT roles.id, roles.title from roles";
+
 const connection = mysql.createConnection({
   host: "localhost",
 
@@ -42,14 +50,7 @@ const run = () => {
     .then((answer) => {
       switch (answer.action) {
         case "View all employees":
-          //viewAllEmployees();
-          const query = `
-            SELECT employee.id, employee.first_name, employee.last_name, roles.title, departments.name AS department
-            FROM employee 
-            LEFT JOIN roles ON employee.role_id = roles.id 
-            LEFT JOIN departments ON roles.department_id = departments.id 
-            LEFT JOIN employee manager ON employee.manager_id = manager.id`;
-          viewRecords(query);
+          viewRecords(allEmpQuery);
           break;
 
         case "View all employees by manager":
@@ -66,7 +67,7 @@ const run = () => {
           break;
 
         case "View all roles":
-          viewAllRoles();
+          viewRecords(rolesQuery);
           break;
 
         case "Add a role":
@@ -87,6 +88,8 @@ const run = () => {
       }
     });
 };
+
+
 
 // Prints employee records to console as a table
 const viewAllEmployees = () => {
@@ -115,7 +118,7 @@ const addEmployee = () => {
   var roles = [];
   var mgrChoice = [];
 
-  getRoles((err, res) => {
+  getRecords(rolesQuery, (err, res) => {
     if (err) throw err;
     else
       res.forEach((role) => {
@@ -123,7 +126,7 @@ const addEmployee = () => {
       });
   });
 
-  getEmployees((err, res) => {
+  getRecords(allEmpQuery, (err, res) => {
     if (err) throw err;
     else
       res.forEach((employee) => {
@@ -187,8 +190,8 @@ const addEmployee = () => {
               params.push(managerID);
 
               const query = `
-            INSERT INTO employee (first_name, last_name, role_id, manager_id) 
-            VALUES (?, ?, ?, ?)`;
+                INSERT INTO employee (first_name, last_name, role_id, manager_id) 
+                VALUES (?, ?, ?, ?)`;
 
               connection.query(query, params, (err, res) => {
                 if (err) throw err;
@@ -213,7 +216,7 @@ const getEmployees = function (cb) {
 };
 
 const getRecords = function (query, cb) {
-  connection.query(query, (err, res, fields) => {
+  connection.query(query, (err, res) => {
     if (err) return cb(err);
     cb(null, res);
   });
