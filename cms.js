@@ -116,13 +116,9 @@ const addEmployee = () => {
   const rolesQuery = "SELECT roles.id, roles.title from roles";
   connection.query(rolesQuery, (err, res) => {
     if (err) throw err;
-    roles = res.map((obj) => {
-      let rObj = {};
-      rObj[obj.key] = obj.value;
-      return obj;
-    });
+    roles = res.map((obj) => ({value: obj.id, name: obj.title}))
   });
-
+  
   inquirer.prompt([
     {
       type: "input",
