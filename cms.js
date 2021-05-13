@@ -40,7 +40,6 @@ const run = () => {
       message: "What would you like to do?",
       choices: [
         "View all employees",
-        "View all employees by manager",
         "Add employee",
         "Remove employee",
         "Update employee",
@@ -55,39 +54,47 @@ const run = () => {
     .then((answer) => {
       switch (answer.action) {
         case "View all employees":
-          viewRecords(allEmpQuery, () => {next()});
-          break;
-
-        case "View all employees by manager":
+          viewRecords(allEmpQuery, () => {
+            next();
+          });
           break;
 
         case "Add employee":
-          addEmployee(() => {next()});
+          addEmployee(() => {
+            next();
+          });
           break;
 
         case "Remove employee":
           break;
 
         case "Update employee":
+          updateEmployee();
           break;
 
         case "View all roles":
-          viewRecords(rolesQuery, () => {next()});
+          viewRecords(rolesQuery, () => {
+            next();
+          });
           break;
 
         case "Add a role":
-          addRole(() => {next()});
+          addRole(() => {
+            next();
+          });
           break;
 
         case "Remove a role":
           break;
 
         case "View departments":
-          viewRecords(deptQuery, () => {next()});
+          viewRecords(deptQuery, () => {
+            next();
+          });
           break;
 
         case "Add department":
-            addDept();
+          addDept();
           break;
 
         case "exit":
@@ -206,11 +213,7 @@ const addEmployee = (cb) => {
               const query = `
                 INSERT INTO employee (first_name, last_name, role_id, manager_id) 
                 VALUES (?, ?, ?, ?)`;
-
-              connection.query(query, params, (err, res) => {
-                if (err) throw err;
-                viewAllEmployees();
-              });
+              insertRecord(query, params, allEmpQuery);
             });
         });
     });
@@ -261,26 +264,134 @@ const addRole = (cb) => {
 };
 
 const addDept = (cb) => {
-    inquirer.prompt([
-        {
-            type: 'input',
-            name: 'dept',
-            message: "Enter the name for the new department",
-        }
-    ]).then((answer) => {
-        const newDept = answer.dept;
-        insertRecord('INSERT INTO departments (name) VALUES (?)', newDept, deptQuery);
-    })
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "dept",
+        message: "Enter the name for the new department",
+      },
+    ])
+    .then((answer) => {
+      const newDept = answer.dept;
+      insertRecord(
+        "INSERT INTO departments (name) VALUES (?)",
+        newDept,
+        deptQuery
+      );
+    });
 };
 
-const insertRecord = (insertQuery, params, viewQuery) => {
-    connection.query(insertQuery, params, (err, res) => {
-        if (err) throw err;
-        else
-            console.log("Success, record inserted")
-            viewRecords(viewQuery, () => {next()});
+const updateEmployee = (cb) => {
+    var params;
+    var roles = [];
+    var empChoice = [];
+
+  
+    getRecords(rolesQuery, (err, res) => {
+      if (err) throw err;
+      else
+        res.forEach((role) => {
+          roles.push({ name: role.title, value: role.id });
+        });
+    });
+  
+    getRecords(allEmpQuery, (err, res) => {
+      if (err) throw err;
+      else
+        res.forEach((employee) => {
+          let empName = `${employee.first_name} ${employee.last_name}`;
+          empChoice.push({ value: employee.id, name: empName });
+        });
+      // add a null value choice option if employee has no manager
+      empChoice.push({ value: null, name: "none" });
+    });
+
+
+    inquirer.prompt([
+        {
+            type: 'list',
+            name: 'action',
+            message: "Select the update type",
+            choices: ["Role", "Manager"],
+        },
+    ])
+    .then((answer) => {
+        const action = answer.action;
+        const params = [];
+
+        const changePrompt = [];
+
+
+        switch (action){
+            case "Manager":
+                changePrompt.push({
+                    type: 'list',
+                    name: 'manager',
+                    message: "Select the new manager (or select none)",
+                    choices: empChoice
+                })
+                break;
+            case "Role":
+                changePrompt.push({
+                    type: 'list',
+                    name: 'role',
+                    message: "Select the new role",
+                    choices: roles
+                })
+                break;
+            default:
+                run();        
+        }
+        
+        inquirer.prompt([
+            {
+                type: 'list',
+                name: 'employee',
+                message: "Select the employee to be updated",
+                choices: empChoice,
+            }
+        ])
+        .then((answer) => {
+            const employee = answer.employee;
+
+            inquirer.prompt(changePrompt).then((answer) => {
+                if(answer.role) {
+                    params.push(
+                        {
+                            role_id: answer.role
+                        }
+                    )
+                } else {
+                    params.push(
+                        {
+                            manager_id: answer.manager
+                        }
+                    )
+                }
+
+                params.push({
+                    id: employee
+                });
+                console.log(params)
+
+                const query = `UPDATE employee SET ? WHERE ?`;
+                insertRecord(query, params, allEmpQuery);
+            })
+        })
     })
+
 }
+
+const insertRecord = (insertQuery, params, viewQuery) => {
+  connection.query(insertQuery, params, (err, res) => {
+    if (err) throw err;
+    else console.log("Success, record inserted");
+    viewRecords(viewQuery, () => {
+      next();
+    });
+  });
+};
 
 const getRecords = function (query, params, cb) {
   connection.query(query, params, (err, res) => {
@@ -288,14 +399,3 @@ const getRecords = function (query, params, cb) {
     cb(null, res);
   });
 };
-
-// Returns callback containing all entries from roles table
-// const getRoles = function (cb) {
-//   connection.query(
-//     "SELECT roles.id, roles.title from roles",
-//     (err, res, fields) => {
-//       if (err) return cb(err);
-//       cb(null, res);
-//     }
-//   );
-// };
