@@ -55,7 +55,7 @@ const run = () => {
     .then((answer) => {
       switch (answer.action) {
         case "View all employees":
-          viewRecords(allEmpQuery);
+          viewRecords(allEmpQuery, () => {next()});
           break;
 
         case "View all employees by manager":
@@ -87,6 +87,7 @@ const run = () => {
           break;
 
         case "Add department":
+            addDept();
           break;
 
         case "exit":
@@ -253,13 +254,33 @@ const addRole = (cb) => {
         params,
         (err, res) => {
           if (err) throw err;
-          viewRecords(rolesQuery);
+          console.log("Success! employee added.");
         }
       );
     });
 };
 
-const addDept = () => {};
+const addDept = (cb) => {
+    inquirer.prompt([
+        {
+            type: 'input',
+            name: 'dept',
+            message: "Enter the name for the new department",
+        }
+    ]).then((answer) => {
+        const newDept = answer.dept;
+        insertRecord('INSERT INTO departments (name) VALUES (?)', newDept, deptQuery);
+    })
+};
+
+const insertRecord = (insertQuery, params, viewQuery) => {
+    connection.query(insertQuery, params, (err, res) => {
+        if (err) throw err;
+        else
+            console.log("Success, record inserted")
+            viewRecords(viewQuery, () => {next()});
+    })
+}
 
 const getRecords = function (query, params, cb) {
   connection.query(query, params, (err, res) => {
