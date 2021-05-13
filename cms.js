@@ -9,6 +9,9 @@ const allEmpQuery = `SELECT employee.id, employee.first_name, employee.last_name
             LEFT JOIN departments ON roles.department_id = departments.id 
             LEFT JOIN employee manager ON employee.manager_id = manager.id`;
 
+const empByMgrQuery = `SELECT employee.id, employee.first_name, employee.last_name 
+            WHERE employee.manager_id = ?`
+
 const rolesQuery = "SELECT roles.id, roles.title from roles";
 
 const deptQuery = "SELECT departments.id, departments.name FROM departments"
@@ -80,7 +83,11 @@ const run = () => {
           break;
 
         case "View departments":
-            viewRecords(deptQuery);
+            viewRecords(deptQuery, (err, res) => {
+                if (err) throw err;
+                else
+                    next();
+            });
           break;
 
         case "Add department":
@@ -95,25 +102,31 @@ const run = () => {
 
 
 
-// Prints employee records to console as a table
-// const viewAllEmployees = () => {
-//   getEmployees((err, res) => {
-//     if (err) throw err;
-//     console.table(res);
-//   });
-// };
+const next = () => {
+    inquirer.prompt([
+        {
+            type: 'list',
+            name: 'next',
+            message: "What would you like to do next?",
+            choices: ['Main menu', 'exit']
+        }
+    ]).then((answer) => {
+        switch (answer.next){
+            case "Main menu":
+                run();
+                break;
+            case "exit":
+                connection.end();
+                break;
+        }
+    })
+}
 
-// const viewAllRoles = () => {
-//   getRoles((err, res) => {
-//     if (err) throw err;
-//     console.table(res);
-//   });
-// };
-
-const viewRecords = (query) => {
+const viewRecords = (query, cb) => {
   getRecords(query, (err, res) => {
     if (err) throw err;
     console.table(res);
+    cb();
   });
 };
 
@@ -248,35 +261,26 @@ const addRole = () => {
     })
 }
 
-// Returns callback containing all entries from employees table
-// const getEmployees = function (cb) {
-//   const query = `SELECT employee.id, employee.first_name, employee.last_name, roles.title, departments.name AS department
-//     FROM employee 
-//     LEFT JOIN roles ON employee.role_id = roles.id 
-//     LEFT JOIN departments ON roles.department_id = departments.id 
-//     LEFT JOIN employee manager ON employee.manager_id = manager.id`;
-//   connection.query(query, (err, res, fields) => {
-//     if (err) return cb(err);
-//     cb(null, res);
-//   });
-// };
+const addDept = () => {
 
-const getRecords = function (query, cb) {
-  connection.query(query, (err, res) => {
+}
+
+const getRecords = function (query, params, cb) {
+  connection.query(query, params, (err, res) => {
     if (err) return cb(err);
     cb(null, res);
   });
 };
 
 // Returns callback containing all entries from roles table
-const getRoles = function (cb) {
-  connection.query(
-    "SELECT roles.id, roles.title from roles",
-    (err, res, fields) => {
-      if (err) return cb(err);
-      cb(null, res);
-    }
-  );
-};
+// const getRoles = function (cb) {
+//   connection.query(
+//     "SELECT roles.id, roles.title from roles",
+//     (err, res, fields) => {
+//       if (err) return cb(err);
+//       cb(null, res);
+//     }
+//   );
+// };
 
 
