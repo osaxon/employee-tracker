@@ -3,6 +3,8 @@ const inquirer = require("inquirer");
 
 require("dotenv").config();
 
+
+// SQL queries
 const allEmpQuery = `SELECT employee.id, employee.first_name, employee.last_name, roles.title, departments.name AS department
             FROM employee 
             LEFT JOIN roles ON employee.role_id = roles.id 
@@ -16,6 +18,12 @@ const rolesQuery = "SELECT roles.id, roles.title from roles";
 
 const deptQuery = "SELECT departments.id, departments.name FROM departments";
 
+const budgetQuery = `SELECT department_id AS id, departments.name AS department, SUM(salary) AS budget 
+FROM roles
+JOIN departments on roles.department_id = departments.id GROUP BY department_id ORDER BY budget DESC`
+
+
+// database connection details
 const connection = mysql.createConnection({
   host: "localhost",
 
@@ -27,11 +35,14 @@ const connection = mysql.createConnection({
   database: "cms_DB",
 });
 
+
+// database connection
 connection.connect((err) => {
   if (err) throw err;
   run();
 });
 
+// main loop
 const run = () => {
   inquirer
     .prompt({
@@ -48,6 +59,7 @@ const run = () => {
         "Remove a role",
         "View departments",
         "Add department",
+        "View budget",
         "exit",
       ],
     })
@@ -97,6 +109,12 @@ const run = () => {
           addDept();
           break;
 
+        case "View budget":
+            viewRecords(budgetQuery, () => {
+                next();
+            })
+            break;
+
         case "exit":
           connection.end();
           break;
@@ -104,6 +122,7 @@ const run = () => {
     });
 };
 
+// prompts for main menu or exit application
 const next = () => {
   inquirer
     .prompt([
@@ -126,6 +145,7 @@ const next = () => {
     });
 };
 
+// function to render records in the console in table view
 const viewRecords = (query, cb) => {
   getRecords(query, (err, res) => {
     if (err) throw err;
@@ -134,6 +154,7 @@ const viewRecords = (query, cb) => {
   });
 };
 
+// function to add a new employee record
 const addEmployee = (cb) => {
   var params;
   var roles = [];
@@ -219,6 +240,7 @@ const addEmployee = (cb) => {
     });
 };
 
+// function to add a new role record
 const addRole = (cb) => {
   var deptChoices = [];
 
@@ -263,6 +285,7 @@ const addRole = (cb) => {
     });
 };
 
+// function to add a new department record
 const addDept = (cb) => {
   inquirer
     .prompt([
@@ -282,107 +305,103 @@ const addDept = (cb) => {
     });
 };
 
+// function to update employee role or manager
 const updateEmployee = (cb) => {
-    var params;
-    var roles = [];
-    var empChoice = [];
+  var params;
+  var roles = [];
+  var empChoice = [];
 
-  
-    getRecords(rolesQuery, (err, res) => {
-      if (err) throw err;
-      else
-        res.forEach((role) => {
-          roles.push({ name: role.title, value: role.id });
-        });
-    });
-  
-    getRecords(allEmpQuery, (err, res) => {
-      if (err) throw err;
-      else
-        res.forEach((employee) => {
-          let empName = `${employee.first_name} ${employee.last_name}`;
-          empChoice.push({ value: employee.id, name: empName });
-        });
-      // add a null value choice option if employee has no manager
-      empChoice.push({ value: null, name: "none" });
-    });
+  getRecords(rolesQuery, (err, res) => {
+    if (err) throw err;
+    else
+      res.forEach((role) => {
+        roles.push({ name: role.title, value: role.id });
+      });
+  });
 
+  getRecords(allEmpQuery, (err, res) => {
+    if (err) throw err;
+    else
+      res.forEach((employee) => {
+        let empName = `${employee.first_name} ${employee.last_name}`;
+        empChoice.push({ value: employee.id, name: empName });
+      });
+    // add a null value choice option if employee has no manager
+    empChoice.push({ value: null, name: "none" });
+  });
 
-    inquirer.prompt([
-        {
-            type: 'list',
-            name: 'action',
-            message: "Select the update type",
-            choices: ["Role", "Manager"],
-        },
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "action",
+        message: "Select the update type",
+        choices: ["Role", "Manager"],
+      },
     ])
     .then((answer) => {
-        const action = answer.action;
-        const params = [];
+      const action = answer.action;
+      const params = [];
 
-        const changePrompt = [];
+      const changePrompt = [];
 
+      switch (action) {
+        case "Manager":
+          changePrompt.push({
+            type: "list",
+            name: "manager",
+            message: "Select the new manager (or select none)",
+            choices: empChoice,
+          });
+          break;
+        case "Role":
+          changePrompt.push({
+            type: "list",
+            name: "role",
+            message: "Select the new role",
+            choices: roles,
+          });
+          break;
+        default:
+          run();
+      }
 
-        switch (action){
-            case "Manager":
-                changePrompt.push({
-                    type: 'list',
-                    name: 'manager',
-                    message: "Select the new manager (or select none)",
-                    choices: empChoice
-                })
-                break;
-            case "Role":
-                changePrompt.push({
-                    type: 'list',
-                    name: 'role',
-                    message: "Select the new role",
-                    choices: roles
-                })
-                break;
-            default:
-                run();        
-        }
-        
-        inquirer.prompt([
-            {
-                type: 'list',
-                name: 'employee',
-                message: "Select the employee to be updated",
-                choices: empChoice,
-            }
+      inquirer
+        .prompt([
+          {
+            type: "list",
+            name: "employee",
+            message: "Select the employee to be updated",
+            choices: empChoice,
+          },
         ])
         .then((answer) => {
-            const employee = answer.employee;
+          const employee = answer.employee;
 
-            inquirer.prompt(changePrompt).then((answer) => {
-                if(answer.role) {
-                    params.push(
-                        {
-                            role_id: answer.role
-                        }
-                    )
-                } else {
-                    params.push(
-                        {
-                            manager_id: answer.manager
-                        }
-                    )
-                }
+          inquirer.prompt(changePrompt).then((answer) => {
+            if (answer.role) {
+              params.push({
+                role_id: answer.role,
+              });
+            } else {
+              params.push({
+                manager_id: answer.manager,
+              });
+            }
 
-                params.push({
-                    id: employee
-                });
-                console.log(params)
+            params.push({
+              id: employee,
+            });
+            console.log(params);
 
-                const query = `UPDATE employee SET ? WHERE ?`;
-                insertRecord(query, params, allEmpQuery);
-            })
-        })
-    })
+            const query = `UPDATE employee SET ? WHERE ?`;
+            insertRecord(query, params, allEmpQuery);
+          });
+        });
+    });
+};
 
-}
-
+// re-usable function to create new or update a record
 const insertRecord = (insertQuery, params, viewQuery) => {
   connection.query(insertQuery, params, (err, res) => {
     if (err) throw err;
@@ -393,9 +412,11 @@ const insertRecord = (insertQuery, params, viewQuery) => {
   });
 };
 
+// re-usable function to retrieve records from a table using a given query
 const getRecords = function (query, params, cb) {
   connection.query(query, params, (err, res) => {
     if (err) return cb(err);
     cb(null, res);
   });
 };
+
