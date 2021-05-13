@@ -10,11 +10,11 @@ const allEmpQuery = `SELECT employee.id, employee.first_name, employee.last_name
             LEFT JOIN employee manager ON employee.manager_id = manager.id`;
 
 const empByMgrQuery = `SELECT employee.id, employee.first_name, employee.last_name 
-            WHERE employee.manager_id = ?`
+            WHERE employee.manager_id = ?`;
 
 const rolesQuery = "SELECT roles.id, roles.title from roles";
 
-const deptQuery = "SELECT departments.id, departments.name FROM departments"
+const deptQuery = "SELECT departments.id, departments.name FROM departments";
 
 const connection = mysql.createConnection({
   host: "localhost",
@@ -62,7 +62,7 @@ const run = () => {
           break;
 
         case "Add employee":
-          addEmployee();
+          addEmployee(() => {next()});
           break;
 
         case "Remove employee":
@@ -72,22 +72,18 @@ const run = () => {
           break;
 
         case "View all roles":
-          viewRecords(rolesQuery);
+          viewRecords(rolesQuery, () => {next()});
           break;
 
         case "Add a role":
-            addRole();
+          addRole(() => {next()});
           break;
 
         case "Remove a role":
           break;
 
         case "View departments":
-            viewRecords(deptQuery, (err, res) => {
-                if (err) throw err;
-                else
-                    next();
-            });
+          viewRecords(deptQuery, () => {next()});
           break;
 
         case "Add department":
@@ -100,27 +96,27 @@ const run = () => {
     });
 };
 
-
-
 const next = () => {
-    inquirer.prompt([
-        {
-            type: 'list',
-            name: 'next',
-            message: "What would you like to do next?",
-            choices: ['Main menu', 'exit']
-        }
-    ]).then((answer) => {
-        switch (answer.next){
-            case "Main menu":
-                run();
-                break;
-            case "exit":
-                connection.end();
-                break;
-        }
-    })
-}
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "next",
+        message: "What would you like to do next?",
+        choices: ["Main menu", "exit"],
+      },
+    ])
+    .then((answer) => {
+      switch (answer.next) {
+        case "Main menu":
+          run();
+          break;
+        case "exit":
+          connection.end();
+          break;
+      }
+    });
+};
 
 const viewRecords = (query, cb) => {
   getRecords(query, (err, res) => {
@@ -130,7 +126,7 @@ const viewRecords = (query, cb) => {
   });
 };
 
-const addEmployee = () => {
+const addEmployee = (cb) => {
   var params;
   var roles = [];
   var mgrChoice = [];
@@ -219,51 +215,51 @@ const addEmployee = () => {
     });
 };
 
-const addRole = () => {
+const addRole = (cb) => {
+  var deptChoices = [];
 
-    var deptChoices = [];
+  getRecords(deptQuery, (err, res) => {
+    if (err) throw err;
+    else
+      res.forEach((dept) => {
+        deptChoices.push({ value: dept.id, name: dept.name });
+      });
+  });
 
-    getRecords(deptQuery, (err, res) => {
-        if (err) throw err;
-        else
-            res.forEach((dept) => {
-            deptChoices.push({ value: dept.id, name: dept.name})
-        })
-    });
-
-    inquirer.prompt([
-        {
-            type: 'input',
-            name: 'title',
-            message: "Enter the role title",
-        },
-        {
-            type: 'input',
-            name: 'salary',
-            message: "Enter the role salary"
-        },
-        {
-            type: 'list',
-            name: 'dept',
-            message: "Select the department for this role",
-            choices: deptChoices
-        }
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "title",
+        message: "Enter the role title",
+      },
+      {
+        type: "input",
+        name: "salary",
+        message: "Enter the role salary",
+      },
+      {
+        type: "list",
+        name: "dept",
+        message: "Select the department for this role",
+        choices: deptChoices,
+      },
     ])
     .then((answers) => {
-        const params = [answers.title, answers.salary, answers.dept];
-        connection.query(
-            `INSERT INTO roles (title, salary, department_id)
-            VALUES (?, ?, ?)`, params, (err, res) => {
-                if (err) throw err;
-                viewRecords(rolesQuery);
-            }
-        )
-    })
-}
+      const params = [answers.title, answers.salary, answers.dept];
+      connection.query(
+        `INSERT INTO roles (title, salary, department_id)
+            VALUES (?, ?, ?)`,
+        params,
+        (err, res) => {
+          if (err) throw err;
+          viewRecords(rolesQuery);
+        }
+      );
+    });
+};
 
-const addDept = () => {
-
-}
+const addDept = () => {};
 
 const getRecords = function (query, params, cb) {
   connection.query(query, params, (err, res) => {
@@ -282,5 +278,3 @@ const getRecords = function (query, params, cb) {
 //     }
 //   );
 // };
-
-
