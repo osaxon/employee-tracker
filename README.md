@@ -4,6 +4,7 @@
 
 Storing employee data is crucial to all companys and organisations. This application uses MySQL and Node.js to provide an easy to use command line interface for storing and viewing employee data. The app has functions to view, add and update employees, roles and departments and has a breakdown of spend per department based on the salary of the roles.
 
+<img src="./Assets/main.png">
   
 # Table of Contents
 
