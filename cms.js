@@ -52,11 +52,9 @@ const run = () => {
       choices: [
         "View all employees",
         "Add employee",
-        "Remove employee",
         "Update employee",
         "View all roles",
         "Add a role",
-        "Remove a role",
         "View departments",
         "Add department",
         "View budget",
@@ -77,9 +75,6 @@ const run = () => {
           });
           break;
 
-        case "Remove employee":
-          break;
-
         case "Update employee":
           updateEmployee();
           break;
@@ -96,8 +91,6 @@ const run = () => {
           });
           break;
 
-        case "Remove a role":
-          break;
 
         case "View departments":
           viewRecords(deptQuery, () => {
@@ -234,7 +227,7 @@ const addEmployee = (cb) => {
               const query = `
                 INSERT INTO employee (first_name, last_name, role_id, manager_id) 
                 VALUES (?, ?, ?, ?)`;
-              insertRecord(query, params, allEmpQuery);
+              updateDB(query, params, allEmpQuery);
             });
         });
     });
@@ -273,15 +266,10 @@ const addRole = (cb) => {
     ])
     .then((answers) => {
       const params = [answers.title, answers.salary, answers.dept];
-      connection.query(
-        `INSERT INTO roles (title, salary, department_id)
-            VALUES (?, ?, ?)`,
-        params,
-        (err, res) => {
-          if (err) throw err;
-          console.log("Success! employee added.");
-        }
-      );
+      const query = `INSERT INTO roles (title, salary, department_id)
+      VALUES (?, ?, ?)`;
+      updateDB(query, params, rolesQuery);
+
     });
 };
 
@@ -297,7 +285,7 @@ const addDept = (cb) => {
     ])
     .then((answer) => {
       const newDept = answer.dept;
-      insertRecord(
+      updateDB(
         "INSERT INTO departments (name) VALUES (?)",
         newDept,
         deptQuery
@@ -395,17 +383,19 @@ const updateEmployee = (cb) => {
             console.log(params);
 
             const query = `UPDATE employee SET ? WHERE ?`;
-            insertRecord(query, params, allEmpQuery);
+            updateDB(query, params, allEmpQuery);
           });
         });
     });
 };
+                    
+
 
 // re-usable function to create new or update a record
-const insertRecord = (insertQuery, params, viewQuery) => {
+const updateDB = (insertQuery, params, viewQuery) => {
   connection.query(insertQuery, params, (err, res) => {
     if (err) throw err;
-    else console.log("Success, record inserted");
+    else console.log("Databae updated");
     viewRecords(viewQuery, () => {
       next();
     });
